@@ -133,7 +133,7 @@ namespace tm_gen
     if (FLAGS_routing_type == "TM_B4")
     {
       B4Optimizer b4_optimizer(&path_provider, false,
-                               FLAGS_link_capacity_multiplier);
+                               FLAGS_link_capacity_multiplier, FLAGS_tm_root);
       OptAndRecord(tm_file, *tm, node_order, "B4", &b4_optimizer);
     }
     else if (FLAGS_routing_type == "TM_SP")

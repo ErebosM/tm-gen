@@ -9,6 +9,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 
 #include "ncode/common.h"
 #include "ncode/lp/lp.h"
@@ -224,6 +227,13 @@ namespace tm_gen
       }
     }
 
+    std::vector<
+        std::pair<
+            std::pair<
+                std::pair<std::string, std::string>, nc::net::Bandwidth>,
+            VariableIndex>>
+        link_utilization_var_indexes;
+
     // There will be one max utilization variable.
     VariableIndex max_utilization_var = problem.AddVariable();
     problem.SetVariableRange(max_utilization_var, 0, Problem::kInifinity);
@@ -243,6 +253,11 @@ namespace tm_gen
                                   -1.0);
 
       VariableIndex link_utilization_var = problem.AddVariable();
+      link_utilization_var_indexes.push_back(
+          make_pair(
+              make_pair(
+                  make_pair(link->src_node()->id(), link->dst_node()->id()), link->bandwidth()),
+              link_utilization_var));
       problem.SetVariableRange(link_utilization_var, 0, Problem::kInifinity);
       problem_matrix.emplace_back(utilization_var_constraint,
                                   link_utilization_var, 1.0);
@@ -250,7 +265,7 @@ namespace tm_gen
       ConstraintIndex constraint = problem.AddConstraint();
       problem.SetConstraintRange(constraint, 0, 0);
 
-      double link_capacity = link->bandwidth().Mbps() * capacity_multiplier_;
+      double link_capacity = link->bandwidth().bps() * capacity_multiplier_;
       problem_matrix.emplace_back(constraint, link_utilization_var,
                                   -link_capacity);
 
@@ -260,7 +275,7 @@ namespace tm_gen
         nc::net::Bandwidth demand = path_and_aggregate.demand;
 
         // The coefficient for the column is the total volume of the aggregate.
-        double value = demand.Mbps();
+        double value = demand.bps();
         problem_matrix.emplace_back(constraint, variable, value);
       }
 
@@ -278,18 +293,26 @@ namespace tm_gen
 
     // Solve the problem.
     problem.SetMatrix(problem_matrix);
+    problem.DumpToFile("out.lp");
     std::unique_ptr<Solution> solution = problem.Solve();
     CHECK(solution->type() == OPTIMAL || solution->type() == FEASIBLE);
 
     // Recover the solution and return it.
     std::map<AggregateId, std::vector<RouteAndFraction>> routes_and_fractions;
     std::set<const nc::net::Walk *> paths_added;
+    long total_capacity = 0;
+    long all_path_total_capacity = 0;
     for (const auto &link_and_path : link_to_paths)
     {
       for (const MMPathAndAggregate &path_and_aggregate : link_and_path.second)
       {
         const AggregateId &id = path_and_aggregate.aggregate;
         const nc::net::Walk *path = path_and_aggregate.path;
+
+        /* LOG(INFO) << path_and_aggregate.path->ToStringNoPorts(*graph_) << " " << path_and_aggregate.demand
+                  << " " << path_and_aggregate.variable << " " << solution->VariableValue(path_and_aggregate.variable); */
+
+        total_capacity += path_and_aggregate.variable;
 
         if (nc::ContainsKey(paths_added, path))
         {
@@ -307,7 +330,19 @@ namespace tm_gen
         routes_and_fractions[id].emplace_back(path, fraction);
       }
     }
+    /* LOG(INFO) << "link_utilization vars count " << link_utilization_var_indexes.size();
+    for (int i = 0; i < link_utilization_var_indexes.size(); i++)
+    {
+      LOG(INFO) << link_utilization_var_indexes[i].first.first.first << " " << link_utilization_var_indexes[i].first.first.second
+                << " capacity " << link_utilization_var_indexes[i].first.second
+                << " solution variable: " << link_utilization_var_indexes[i].second << " - " << solution->VariableValue(link_utilization_var_indexes[i].second);
+    } */
 
+    LOG(INFO) << std::fixed << std::setprecision(5)
+              << "max utilization var " << solution->VariableValue(max_utilization_var)
+              << " aggregate throughput " << 1 / solution->VariableValue(max_utilization_var);
+
+    /*     LOG(INFO) << std::fixed << std::setprecision(5) << "TOTAL " << total_capacity << " of " << solution->ObjectiveValue(); */
     auto out = nc::make_unique<RoutingConfiguration>(tm);
     for (const auto &id_and_route_and_fraction : routes_and_fractions)
     {
@@ -649,6 +684,7 @@ namespace tm_gen
       }
     }
 
+    std::ofstream myfile(folder_path_ + "/routing.txt");
     int64_t all_path_total_capacity = 0;
     int64_t total_demand = 0;
     auto out = nc::make_unique<RoutingConfiguration>(tm);
@@ -679,9 +715,9 @@ namespace tm_gen
         double fraction = capacity / total_capacity;
         routes_for_aggregate.emplace_back(path, fraction);
 
-        //LOG(INFO) << "Path " << path->ToStringNoPorts(*graph_) << " capacity "
-        //          << capacity << " / " << total_capacity << " fraction "
-        //          << fraction << " ( " << (int64_t)aggregate_state.get_demand().bps() << " )";
+        myfile << "Path " << path->ToStringNoPorts(*graph_) << " capacity "
+               << capacity << " / " << total_capacity << " fraction "
+               << fraction << " ( " << (int64_t)aggregate_state.get_demand().bps() << " )\n";
       }
       all_path_total_capacity += total_capacity;
       total_demand += (int64_t)aggregate_state.get_demand().bps();
@@ -689,13 +725,20 @@ namespace tm_gen
       out->AddRouteAndFraction(aggregate_state.aggregate_id(),
                                routes_for_aggregate);
     }
-    LOG(INFO) << std::fixed << "All Path Total Capacity " << all_path_total_capacity << " ( " << total_demand << " )";
+    myfile << std::fixed << "All Path Total Capacity " << all_path_total_capacity << " ( " << total_demand << " )\n";
+
+    LOG(INFO) << std::fixed << std::setprecision(5) << "All Path Total Capacity " << all_path_total_capacity / 1e12 << " ( " << total_demand / 1e12 << " )\n";
 
     /* for (nc::net::GraphLinkIndex link_index : graph_->AllLinks())
     {
       const nc::net::GraphLink *link = graph_->GetLink(link_index);
-      LOG(INFO) << link->src() << " - " << link->dst() << " -> " << link->bandwidth() << " delay " << link->delay().count();
+      if (link->src_id() == "400")
+      {
+        LOG(INFO) << link->src_id() << " - " << link->dst_id() << " -> " << link->bandwidth() << " delay " << link->delay().count();
+      }
     } */
+
+    myfile.close();
 
     return out;
   }

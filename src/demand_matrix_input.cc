@@ -82,11 +82,12 @@ namespace tm_gen
         nc::File::GetFilesWithExtension(top_root, kTopologyExtension);
 
     std::map<std::string, std::vector<std::string>> out;
-    for (const std::string &tm_file : traffic_matrices)
+    for (const std::string &topo_file : topologies)
     {
-      std::string topology_file =
-          FindTopologyFileForDemandFileOrDie(tm_file, topologies);
-      out[topology_file].emplace_back(tm_file);
+      for (const std::string &tm_file : traffic_matrices)
+      {
+        out[topo_file].emplace_back(tm_file);
+      }
     }
     *tm_count = traffic_matrices.size();
     *topology_count = out.size();
