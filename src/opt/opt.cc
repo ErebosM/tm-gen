@@ -404,6 +404,11 @@ namespace tm_gen
       return current_path_->Contains(link_index);
     }
 
+    const nc::net::Bandwidth &get_demand() const
+    {
+      return demand_;
+    }
+
   private:
     // Identifies the aggregate.
     AggregateId aggregate_id_;
@@ -644,6 +649,8 @@ namespace tm_gen
       }
     }
 
+    int64_t all_path_total_capacity = 0;
+    int64_t total_demand = 0;
     auto out = nc::make_unique<RoutingConfiguration>(tm);
     for (const B4AggregateState &aggregate_state : aggregate_states)
     {
@@ -671,10 +678,24 @@ namespace tm_gen
 
         double fraction = capacity / total_capacity;
         routes_for_aggregate.emplace_back(path, fraction);
+
+        //LOG(INFO) << "Path " << path->ToStringNoPorts(*graph_) << " capacity "
+        //          << capacity << " / " << total_capacity << " fraction "
+        //          << fraction << " ( " << (int64_t)aggregate_state.get_demand().bps() << " )";
       }
+      all_path_total_capacity += total_capacity;
+      total_demand += (int64_t)aggregate_state.get_demand().bps();
+
       out->AddRouteAndFraction(aggregate_state.aggregate_id(),
                                routes_for_aggregate);
     }
+    LOG(INFO) << std::fixed << "All Path Total Capacity " << all_path_total_capacity << " ( " << total_demand << " )";
+
+    /* for (nc::net::GraphLinkIndex link_index : graph_->AllLinks())
+    {
+      const nc::net::GraphLink *link = graph_->GetLink(link_index);
+      LOG(INFO) << link->src() << " - " << link->dst() << " -> " << link->bandwidth() << " delay " << link->delay().count();
+    } */
 
     return out;
   }

@@ -141,7 +141,7 @@ namespace tm_gen
       ShortestPathOptimizer sp_optimizer(&path_provider);
       OptAndRecord(tm_file, *tm, node_order, "SP", &sp_optimizer);
     }
-    else if (FLAGS_routing_type == "TM_MinMaxLP")
+    else if (FLAGS_routing_type == "TM_MinMaxLD")
     {
       MinMaxOptimizer minmax_low_delay_optimizer(
           &path_provider, FLAGS_link_capacity_multiplier, true);
