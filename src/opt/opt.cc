@@ -30,7 +30,7 @@ namespace tm_gen
 {
 
   std::unique_ptr<RoutingConfiguration> ShortestPathOptimizer::Optimize(
-      const TrafficMatrix &tm)
+      const TrafficMatrix &tm, const std::string &result_file)
   {
     auto out = nc::make_unique<RoutingConfiguration>(tm);
     for (const auto &aggregate_and_demand : tm.demands())
@@ -106,7 +106,7 @@ namespace tm_gen
   }
 
   std::unique_ptr<RoutingConfiguration> MinMaxOptimizer::Optimize(
-      const TrafficMatrix &tm)
+      const TrafficMatrix &tm, const std::string &result_file)
   {
     nc::lp::MinMaxProblem problem(
         graph_, GetCapacities(*graph_, link_capacity_multiplier_, exclusion_set_),
@@ -140,7 +140,7 @@ namespace tm_gen
   }
 
   std::unique_ptr<RoutingConfiguration> LDRLinkBased::Optimize(
-      const TrafficMatrix &tm)
+      const TrafficMatrix &tm, const std::string &result_file)
   {
     nc::lp::MinCostMultiCommodityFlowProblem problem(
         GetCapacities(*graph_, link_capacity_multiplier_, exclusion_set_),
@@ -180,7 +180,7 @@ namespace tm_gen
   };
 
   std::unique_ptr<RoutingConfiguration> MinMaxPathBasedOptimizer::Optimize(
-      const TrafficMatrix &tm)
+      const TrafficMatrix &tm, const std::string &result_file)
   {
     using namespace nc::lp;
 
@@ -301,7 +301,6 @@ namespace tm_gen
     std::map<AggregateId, std::vector<RouteAndFraction>> routes_and_fractions;
     std::set<const nc::net::Walk *> paths_added;
     long total_capacity = 0;
-    long all_path_total_capacity = 0;
     for (const auto &link_and_path : link_to_paths)
     {
       for (const MMPathAndAggregate &path_and_aggregate : link_and_path.second)
@@ -512,7 +511,7 @@ namespace tm_gen
   }
 
   std::unique_ptr<RoutingConfiguration> B4Optimizer::Optimize(
-      const TrafficMatrix &tm)
+      const TrafficMatrix &tm, const std::string &result_file)
   {
     std::vector<B4AggregateState> aggregate_states;
     std::map<nc::net::GraphLinkIndex, B4LinkState> link_states;
@@ -684,7 +683,7 @@ namespace tm_gen
       }
     }
 
-    std::ofstream myfile(folder_path_ + "/routing.txt");
+    std::ofstream myfile(result_file);
     int64_t all_path_total_capacity = 0;
     int64_t total_demand = 0;
     auto out = nc::make_unique<RoutingConfiguration>(tm);
@@ -715,9 +714,10 @@ namespace tm_gen
         double fraction = capacity / total_capacity;
         routes_for_aggregate.emplace_back(path, fraction);
 
-        myfile << "Path " << path->ToStringNoPorts(*graph_) << " capacity "
-               << capacity << " / " << total_capacity << " fraction "
-               << fraction << " ( " << (int64_t)aggregate_state.get_demand().bps() << " )\n";
+        // PATH DELAY CAPACITY TOTAL_CAPACITY FRACTION DEMAND
+        myfile << std::fixed << path->ToStringNoPorts(*graph_) << " "
+               << capacity << " " << total_capacity << " "
+               << fraction << " " << (int64_t)aggregate_state.get_demand().bps() << "\n";
       }
       all_path_total_capacity += total_capacity;
       total_demand += (int64_t)aggregate_state.get_demand().bps();
@@ -725,7 +725,7 @@ namespace tm_gen
       out->AddRouteAndFraction(aggregate_state.aggregate_id(),
                                routes_for_aggregate);
     }
-    myfile << std::fixed << "All Path Total Capacity " << all_path_total_capacity << " ( " << total_demand << " )\n";
+    myfile << std::fixed << "all_path_total_capacity " << all_path_total_capacity << " of " << total_demand << "\n";
 
     LOG(INFO) << std::fixed << std::setprecision(5) << "All Path Total Capacity " << all_path_total_capacity / 1e12 << " ( " << total_demand / 1e12 << " )\n";
 
@@ -768,7 +768,7 @@ namespace tm_gen
 
       PathProvider path_provider(&graph);
       LDRLinkBased ctr(&path_provider, 1.0, {});
-      auto result = ctr.Optimize(tm);
+      auto result = ctr.Optimize(tm, "");
       if (!result)
       {
         // Not feasible.
@@ -906,7 +906,7 @@ namespace tm_gen
     tm.AddDemand(id, {bandwidth, 1000});
 
     std::unique_ptr<RoutingConfiguration> routing_configuration =
-        ctr_link_based.Optimize(tm);
+        ctr_link_based.Optimize(tm, "");
     if (!routing_configuration)
     {
       return false;

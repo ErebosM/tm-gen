@@ -24,15 +24,15 @@ namespace tm_gen
     virtual ~Optimizer() {}
 
     virtual std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) = 0;
+        const TrafficMatrix &tm, const std::string &result_file) = 0;
 
     // Same as Optimize, but will also time itself and set the time and optimizer
     // string variables in the returned RoutingConfiguration.
     std::unique_ptr<RoutingConfiguration> OptimizeWithTimeAndOptString(
-        const TrafficMatrix &tm, const std::string &opt_string)
+        const TrafficMatrix &tm, const std::string &opt_string, const std::string &result_file)
     {
       auto start = std::chrono::high_resolution_clock::now();
-      auto rc = Optimize(tm);
+      auto rc = Optimize(tm, result_file);
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::milliseconds duration =
           std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
@@ -62,7 +62,7 @@ namespace tm_gen
         : Optimizer(path_provider) {}
 
     std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) override;
+        const TrafficMatrix &tm, const std::string &result_file) override;
   };
 
   // Returns a solution that minimizes the maximum utilization of any link in the
@@ -82,7 +82,7 @@ namespace tm_gen
           also_minimize_delay_(also_minimize_delay) {}
 
     std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) override;
+        const TrafficMatrix &tm, const std::string &result_file) override;
 
   private:
     // Elements to exclude.
@@ -110,7 +110,7 @@ namespace tm_gen
           also_minimize_delay_(also_minimize_delay) {}
 
     std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) override;
+        const TrafficMatrix &tm, const std::string &result_file) override;
 
   private:
     // Number of K shortest path.
@@ -137,7 +137,7 @@ namespace tm_gen
           folder_path_(folder_path) {}
 
     std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) override;
+        const TrafficMatrix &tm, const std::string &result_file) override;
 
   private:
     bool flow_count_as_fair_share_;
@@ -160,7 +160,7 @@ namespace tm_gen
           link_capacity_multiplier_(link_capacity_multiplier) {}
 
     std::unique_ptr<RoutingConfiguration> Optimize(
-        const TrafficMatrix &tm) override;
+        const TrafficMatrix &tm, const std::string &result_file) override;
 
   private:
     // Elements to exclude.

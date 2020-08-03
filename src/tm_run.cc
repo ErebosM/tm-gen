@@ -59,7 +59,7 @@ namespace tm_gen
 
       LDROptimizer ldr_optimizer(&path_provider, link_capacity_multiplier, false,
                                  false);
-      std::unique_ptr<RoutingConfiguration> routing = ldr_optimizer.Optimize(tm);
+      std::unique_ptr<RoutingConfiguration> routing = ldr_optimizer.Optimize(tm, "");
       nc::net::Delay total_delay = routing->TotalPerFlowDelay();
       double value = duration_cast<milliseconds>(total_delay).count() / 1000.0;
       out.emplace_back(value);
@@ -68,10 +68,10 @@ namespace tm_gen
     return out;
   }
 
-  static std::string GetFilename(const std::string &tm_file,
+  static std::string GetFilename(const std::string &top_file,
                                  const std::string opt_string)
   {
-    std::string tm_base = nc::StringReplace(tm_file, ".demands", "", true);
+    std::string tm_base = nc::StringReplace(top_file, ".graph", "", true);
     std::string link_capacity_str =
         FLAGS_link_capacity_multiplier == 1.0
             ? ""
@@ -89,19 +89,19 @@ namespace tm_gen
     nc::File::WriteStringToFileOrDie(serialized, out);
   }
 
-  static void OptAndRecord(const std::string &tm_file, const TrafficMatrix &tm,
+  static void OptAndRecord(const std::string &top_file, const TrafficMatrix &tm,
                            const std::vector<std::string> &node_order,
                            const std::string opt_string, Optimizer *opt)
   {
-    std::string out = GetFilename(tm_file, opt_string);
+    std::string out = GetFilename(top_file, opt_string);
     /* if (!FLAGS_force && nc::File::Exists(out))
     {
       LOG(INFO) << "File exists " << out << ", will skip";
       return;
     } */
 
-    auto rc = opt->OptimizeWithTimeAndOptString(tm, opt_string);
-    RecordRoutingConfig(out, node_order, *rc);
+    auto rc = opt->OptimizeWithTimeAndOptString(tm, opt_string, out);
+    //RecordRoutingConfig(out, node_order, *rc);
   }
 
   static void RunOptimizers(const Input &input)
@@ -134,32 +134,32 @@ namespace tm_gen
     {
       B4Optimizer b4_optimizer(&path_provider, false,
                                FLAGS_link_capacity_multiplier, FLAGS_tm_root);
-      OptAndRecord(tm_file, *tm, node_order, "B4", &b4_optimizer);
+      OptAndRecord(top_file, *tm, node_order, "B4", &b4_optimizer);
     }
-    else if (FLAGS_routing_type == "TM_SP")
+    /* else if (FLAGS_routing_type == "TM_SP")
     {
       ShortestPathOptimizer sp_optimizer(&path_provider);
-      OptAndRecord(tm_file, *tm, node_order, "SP", &sp_optimizer);
+      OptAndRecord(top_file, *tm, node_order, "SP", &sp_optimizer);
     }
     else if (FLAGS_routing_type == "TM_MinMaxLD")
     {
       MinMaxOptimizer minmax_low_delay_optimizer(
           &path_provider, FLAGS_link_capacity_multiplier, true);
-      OptAndRecord(tm_file, *tm, node_order, "MinMaxLD",
+      OptAndRecord(top_file, *tm, node_order, "MinMaxLD",
                    &minmax_low_delay_optimizer);
-    }
+    } */
     else if (FLAGS_routing_type == "TM_MinMaxK10")
     {
       MinMaxPathBasedOptimizer minmax_ksp_optimizer(
           &path_provider, FLAGS_link_capacity_multiplier, true, 10);
-      OptAndRecord(tm_file, *tm, node_order, "MinMaxK10", &minmax_ksp_optimizer);
+      OptAndRecord(top_file, *tm, node_order, "MinMaxK10", &minmax_ksp_optimizer);
     }
-    else if (FLAGS_routing_type == "TM_LDR")
+    /* else if (FLAGS_routing_type == "TM_LDR")
     {
       LDROptimizer ldr_optimizer(&path_provider, FLAGS_link_capacity_multiplier,
                                  false, false);
-      OptAndRecord(tm_file, *tm, node_order, "LDR", &ldr_optimizer);
-    }
+      OptAndRecord(top_file, *tm, node_order, "LDR", &ldr_optimizer);
+    } */
     else
     {
       LOG(ERROR) << FLAGS_routing_type << " routing_type not defined.";

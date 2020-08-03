@@ -98,7 +98,7 @@ namespace tm_gen
   TEST_F(ShortestPathTest, SingleAggregate)
   {
     AddSPAggregate("A", "B");
-    auto routing = sp_optimizer_.Optimize(tm_);
+    auto routing = sp_optimizer_.Optimize(tm_, "");
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1.0));
   }
 
@@ -106,7 +106,7 @@ namespace tm_gen
   {
     AddSPAggregate("A", "B");
     AddSPAggregate("A", "C");
-    auto routing = sp_optimizer_.Optimize(tm_);
+    auto routing = sp_optimizer_.Optimize(tm_, "");
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1.0));
     ASSERT_TRUE(HasPath(*routing, "[A->B, B->C]", 1.0));
   }
@@ -130,7 +130,7 @@ namespace tm_gen
   {
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1.0));
   }
@@ -140,7 +140,7 @@ namespace tm_gen
   {
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed * 1.2);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.833));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.166));
@@ -152,7 +152,7 @@ namespace tm_gen
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed * 0.6);
     AddAggregate("A", "C", kDefaultLinkspeed * 0.6);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1 / 1.2));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.2 / 1.2));
@@ -166,7 +166,7 @@ namespace tm_gen
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed * 0.3);
     AddAggregate("A", "C", kDefaultLinkspeed * 0.9);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     // Should be the same as in the previous test!
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1 / 1.2));
@@ -180,7 +180,7 @@ namespace tm_gen
   {
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed * 3);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.5));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.5));
@@ -192,7 +192,7 @@ namespace tm_gen
     B4Optimizer b4_optimizer(path_provider_.get(), false, 1.0, "");
     AddAggregate("A", "B", kDefaultLinkspeed * 3);
     AddAggregate("D", "C", kDefaultLinkspeed * 2);
-    auto routing = b4_optimizer.Optimize(tm_);
+    auto routing = b4_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.833));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.166));
@@ -218,7 +218,7 @@ namespace tm_gen
   {
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1.0));
   }
@@ -228,7 +228,7 @@ namespace tm_gen
   {
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed * 1.2);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     /* for (const auto &aggregate_and_routes : routing->routes())
     {
@@ -251,7 +251,7 @@ namespace tm_gen
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed * 0.6);
     AddAggregate("A", "C", kDefaultLinkspeed * 0.6);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1 / 1.2));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.2 / 1.2));
@@ -265,7 +265,7 @@ namespace tm_gen
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed * 0.3);
     AddAggregate("A", "C", kDefaultLinkspeed * 0.9);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     // Should be the same as in the previous test!
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1 / 1.2));
@@ -279,7 +279,7 @@ namespace tm_gen
   {
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed * 3);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.5));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.5));
@@ -291,7 +291,7 @@ namespace tm_gen
     MinMaxPathBasedOptimizer minmaxpath_optimizer(path_provider_.get(), 1.0, true, 10);
     AddAggregate("A", "B", kDefaultLinkspeed * 3);
     AddAggregate("D", "C", kDefaultLinkspeed * 2);
-    auto routing = minmaxpath_optimizer.Optimize(tm_);
+    auto routing = minmaxpath_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.833));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.166));
@@ -318,7 +318,7 @@ namespace tm_gen
   {
     MinMaxOptimizer minmax_optimizer(path_provider_.get(), 1.0, false);
     AddAggregate("A", "B", kDefaultLinkspeed);
-    auto routing = minmax_optimizer.Optimize(tm_);
+    auto routing = minmax_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.5));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.5));
@@ -329,7 +329,7 @@ namespace tm_gen
     MinMaxOptimizer minmax_optimizer(path_provider_.get(), 1.0, false);
     AddAggregate("A", "B", kDefaultLinkspeed);
     AddAggregate("A", "D", kDefaultLinkspeed);
-    auto routing = minmax_optimizer.Optimize(tm_);
+    auto routing = minmax_optimizer.Optimize(tm_, "");
 
     // Traffic should be split among the 2 shortest paths.
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1.0));
@@ -341,7 +341,7 @@ namespace tm_gen
     MinMaxOptimizer minmax_optimizer(path_provider_.get(), 1.0, false);
     AddAggregate("A", "B", kDefaultLinkspeed * 2);
     AddAggregate("A", "D", kDefaultLinkspeed);
-    auto routing = minmax_optimizer.Optimize(tm_);
+    auto routing = minmax_optimizer.Optimize(tm_, "");
 
     // The optimizer should equalize overload:
     // 0.75 * 2 is 1.5 and 1 + 0.25 * 2 is also 1.5.
@@ -368,7 +368,7 @@ namespace tm_gen
   {
     LDROptimizer ldr_optimizer(path_provider_.get(), 1.0, true, false);
     AddAggregate("A", "C", kDefaultLinkspeed);
-    auto routing = ldr_optimizer.Optimize(tm_);
+    auto routing = ldr_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B, B->C]", 1.0));
   }
@@ -377,7 +377,7 @@ namespace tm_gen
   {
     LDROptimizer ldr_optimizer(path_provider_.get(), 1.0, true, false);
     AddAggregate("A", "C", kDefaultLinkspeed * 2);
-    auto routing = ldr_optimizer.Optimize(tm_);
+    auto routing = ldr_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B, B->C]", 0.5));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C]", 0.5));
@@ -390,7 +390,7 @@ namespace tm_gen
   {
     LDROptimizer ldr_optimizer(path_provider_.get(), 1.0, true, false);
     AddAggregate("A", "B", kDefaultLinkspeed * 1.2);
-    auto routing = ldr_optimizer.Optimize(tm_);
+    auto routing = ldr_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 1 / 1.2));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.2 / 1.2));
@@ -400,7 +400,7 @@ namespace tm_gen
   {
     LDROptimizer ldr_optimizer(path_provider_.get(), 1.0, true, false);
     AddAggregate("A", "C", kDefaultLinkspeed * 3);
-    auto routing = ldr_optimizer.Optimize(tm_);
+    auto routing = ldr_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B, B->C]", 0.5));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C]", 0.5));
@@ -413,7 +413,7 @@ namespace tm_gen
     AddAggregate("B", "A", nc::net::Bandwidth::FromKBitsPerSecond(200));
     AddAggregate("C", "D", nc::net::Bandwidth::FromKBitsPerSecond(1500));
     AddAggregate("D", "C", nc::net::Bandwidth::FromKBitsPerSecond(200));
-    auto routing = ldr_optimizer.Optimize(tm_);
+    auto routing = ldr_optimizer.Optimize(tm_, "");
 
     ASSERT_TRUE(HasPath(*routing, "[A->B]", 0.666));
     ASSERT_TRUE(HasPath(*routing, "[A->D, D->C, C->B]", 0.333));
@@ -422,7 +422,7 @@ namespace tm_gen
     ASSERT_TRUE(HasPath(*routing, "[B->A]", 1.0));
     ASSERT_TRUE(HasPath(*routing, "[D->C]", 1.0));
 
-    auto routing_two = ldr_optimizer.Optimize(tm_);
+    auto routing_two = ldr_optimizer.Optimize(tm_, "");
     ASSERT_TRUE(HasPath(*routing_two, "[A->B]", 0.666));
   }
 
