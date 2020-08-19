@@ -293,7 +293,6 @@ namespace tm_gen
 
     // Solve the problem.
     problem.SetMatrix(problem_matrix);
-    problem.DumpToFile("out.lp");
     std::unique_ptr<Solution> solution = problem.Solve();
     CHECK(solution->type() == OPTIMAL || solution->type() == FEASIBLE);
 
