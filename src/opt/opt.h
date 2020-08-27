@@ -34,8 +34,8 @@ namespace tm_gen
       auto start = std::chrono::high_resolution_clock::now();
       auto rc = Optimize(tm, result_file);
       auto end = std::chrono::high_resolution_clock::now();
-      std::chrono::milliseconds duration =
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+      std::chrono::nanoseconds duration =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
       rc->set_time_to_compute(duration);
       rc->set_optimizer_string(opt_string);
