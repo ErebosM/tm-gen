@@ -286,7 +286,7 @@ namespace tm_gen
 
     const std::string &optimizer_string() const { return optimizer_string_; }
 
-    const std::chrono::milliseconds &time_to_compute() const
+    const std::chrono::nanoseconds &time_to_compute() const
     {
       return time_to_compute_;
     }
@@ -297,7 +297,7 @@ namespace tm_gen
 
     // Optional fields that identify the time it took to compute the solution and
     // the optimizer that was used. Set to 0 if unknown.
-    std::chrono::milliseconds time_to_compute_;
+    std::chrono::nanoseconds time_to_compute_;
     std::string optimizer_string_;
   };
 
